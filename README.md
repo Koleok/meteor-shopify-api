@@ -6,13 +6,7 @@ This package handles everything needed to set-up an embedded Shopify app includi
 
 This package does not include all of the Shopify API endpoints, you can add your own as required depending on the functionality of your app.
 
-[View package on Atmosphere](https://atmospherejs.com/cliffers/shopify-api)
-
-#### Install package
-
-```
-meteor add cliffers:shopify-api
-```
+_(Incomplete fork of cliffers:shopify-api)_
 
 ## Package Init
 
