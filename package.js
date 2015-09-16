@@ -2,7 +2,7 @@ Package.describe({
 	name: 'koleok:shopify-api',
 	summary: 'Package for the Shopify API. Also handles OAuth authentication for embedded shopify apps',
 	version: '0.0.1',
-	git: 'https://bitbucket.org/airwaves/meteor-packages'
+	git: 'https://github.com/Koleok/meteor-shopify-api.git'
 });
 
 Package.onUse(function(api) {
