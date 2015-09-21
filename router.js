@@ -6,7 +6,7 @@
  * If successfull, then we log the shopify user in
  * ------------------------------------*/
 Router.route('shopifyAuthenticate', {
-	path: '/shopify/authenticate',
+    path: '/shopify/authenticate',
 
     onBeforeAction: function() {
 
@@ -24,45 +24,42 @@ Router.route('shopifyAuthenticate', {
         }
     },
 
-	action: function() {
-        
+    action: function() {
+
         var code = this.params.query.code;
         var shop = this.params.query.shop;
+        var nonce = this.params.query.state;
         var that = this;
 
-        console.log('Shopify app: Validating Shopify signature...');
-
         // Validate signature to ensure its from Shopify
-        Meteor.call('shopify/validateSignature', this.params.query, function(error, result) {
+        Meteor.call('shopify/validateAuthCode', this.params.query, function(error, result) {
 
             // Successful signature validation
             if (result === true) {
 
-                console.log('Shopify app: Shopify signature validated')
                 console.log('Shopify app: Shopify authorisation successfull');
                 console.log('Shopify app: Requesting permanent access token...');
-            
+
                 // Generate permanent access token
                 Meteor.call('shopify/oauth/generateAccessToken', code, shop, function(error, result) {
-                    
+
                     // Generated access token successfully
                     if (result) {
-        
+
                         console.log('Shopify app: Permanent access token generated');
-        
-                    	// Shopify OAuth authentication process complete & successful, so now log the user in
-                    	loginWithShopify(result.userId);
-                    
-                    // Error generating access token
+                        Router.go('dashboard');
+
+                        // Error generating access token
                     } else if (error) {
+                        console.log(error);
                         handleError('Cannot generate access token, invalid OAuth request');
                     }
                 });
 
-            // Signature validation error
+                // Signature validation error
             } else {
                 handleError('Cannot validate Shopify OAuth signature. There maybe a security issue.');
             }
         });
-	}
+    }
 });

@@ -41,14 +41,40 @@ Meteor.startup(function() {
 });
 
 Meteor.methods({
+    /* --------------------------------------
+     * Shopify authentication setup methods
+     * --------------------------------------
+     * Construct auth url with passed parameters
+     * ------------------------------------*/
+    'shopify/getInstallURL': function(shop) {
+        return 'https://' + shop + '.myshopify.com/admin/oauth/authorize?' +
+            'client_id=' + Meteor.settings.shopify.apiKey +
+            '&scope=' + Meteor.settings.shopify.scopes +
+            '&redirect_uri=' + Meteor.settings.shopify.appUrl +
+            '&state=' + Meteor.settings.shopify.nonce
+    },
 
+    'shopify/getShopifyConfig': function(shop) {
+        return {
+            appUrl: Meteor.settings.shopify.appUrl,
+            shop: shop.shopName,
+            apiKey: Meteor.settings.shopify.apiKey,
+            scopes: Meteor.settings.shopify.scopes
+        }
+    },
+
+    'shopify/getPlatformId': function() {
+        return Platforms.findOne({
+            name: "Shopify"
+        })._id;
+    },
     /* --------------------------------------
      * Shopify oauth signature validation function
      * --------------------------------------
      * Validates the shopify oauth signature according to:
      * http://docs.shopify.com/api/authentication/oauth
      * ------------------------------------*/
-    'shopify/validateSignature': function(params) {
+    'shopify/validateAuthCode': function(params) {
 
         check(params, Object);
 
@@ -68,9 +94,13 @@ Meteor.methods({
         return hash === hmac;
     },
 
+    'shopify/validateNonce': function(nonce) {
+
+        return true;
+    },
+
     'shopify/oauth/generateAccessToken': function(code, shop) {
 
-        check(code, String);
         check(code, String);
 
         if (!shop || !code) {
@@ -80,7 +110,8 @@ Meteor.methods({
         this.unblock();
 
         var apiKey = ShopifyApi.options.apiKey,
-            secret = ShopifyApi.options.secret;
+            secret = ShopifyApi.options.secret,
+            shopName = shop.replace('.myshopify.com', '');
 
         var url = 'https://' + shop + '/admin/oauth/access_token';
         var data = {
@@ -96,9 +127,28 @@ Meteor.methods({
 
         if (result.statusCode === 200) {
 
-            // Save the new access token to user doc
-            return Meteor.call('shopify/updateOrCreateUser', shop, result.data.access_token);
+            // Save the new store doc
+            var doc = {
+                userId: this.userId,
+                platformId: Meteor.call('shopify/getPlatformId'),
+                configData: {
+                    id: shop,
+                    accessToken: result.data.access_token,
+                    shopName: shopName,
+                    shop: shop
+                }
+            };
+
+            console.log(doc);
+            Meteor.call('shopify/saveShop', doc, function (error, newId) {
+                if (error) {
+                    console.log(error);
+                }
+            });
         }
+    },
+    'shopify/saveShop': function(shop) {
+        return Stores.insert(shop);
     },
 
     'shopify/updateOrCreateUser': function(shop, accessToken) {
@@ -121,37 +171,6 @@ Meteor.methods({
         return Accounts.updateOrCreateUserFromExternalService('shopify', serviceData);
     },
 
-    'shopify/user': function() {
-
-        // If shop option has been manually set in options then use this shop
-        if (ShopifyApi.options.shop != '') {
-            var shop = ShopifyApi.options.shop;
-            var selector = {
-                'services.shopify.shop': shop
-            };
-
-            // Otherwise get shop based on currently logged in user
-        } else {
-            // Get the currently logged in user
-            var currentUserId = Meteor.userId();
-            var selector = {
-                _id: currentUserId
-            };
-        }
-
-        // Get all user data
-        var user = Meteor.users.findOne(selector);
-
-        if (user.services.shopify) {
-            return {
-                shop: user.services.shopify.shop,
-                token: user.services.shopify.accessToken
-            }
-        } else {
-            throw new Meteor.Error('Shopify app: No shopify user could be found');
-        }
-    },
-
     'shopify/api/call': function(method, endpoint, params, content) {
 
         // Support (method, endpoint) argument list
@@ -160,9 +179,9 @@ Meteor.methods({
             var content = null;
         }
 
-        var shop = Meteor.call('shopify/user').shop,
-            token = Meteor.call('shopify/user').token,
-            apiUrl = 'https://' + shop + endpoint;
+        var shop = ShopifyApi.options.shopName,
+            token = ShopifyApi.options.accessToken,
+            apiUrl = 'https://' + shop + '.myshopify.com' + endpoint;
 
         if (!shop || !token || !apiUrl) {
             throw new Meteor.Error('400', 'Shopify app: Missing parameter for Shopify API call');
