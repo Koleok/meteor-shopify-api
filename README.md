@@ -11,8 +11,8 @@ _(Incomplete fork of cliffers:shopify-api)_
 ## Package Init
 
 #### Client Init
+Setup Shopify API options for client
 ```
-// Setup Shopify API options for client
 ShopifyApi.init({
     appUrl: 		'https://yourAppUrl.com',
     apiKey: 		'App API Key...',
@@ -20,8 +20,8 @@ ShopifyApi.init({
 ```
 
 #### Server Init
+Setup Shopify API options for server
 ```
-// Setup Shopify API options for server
 ShopifyApi.init({
     apiKey: 	'App API Key...',
     secret: 	'App Secret...',
@@ -41,15 +41,11 @@ ShopifyApi.authorizeApp(queryParams);
 
 If your using Iron:router then you can add the login check to a onBeforeAction like so:
 
+- Using the Iron Router onBeforeAction to check if the user is logged in or not If not, start the login process. 
+- Specify which routes require authenication by adding specific routes to the array in the 'only' param. 
+- You can also use 'except' rather than 'only' if you want to exclude certain routes
+
 ```
-/* --------------------------------------
- * Login check
- * --------------------------------------
- * Using the Iron Router onBeforeAction to check if the user is logged in or not
- * If not, start the login process
- * Specify which routes require authenication by adding specific routes to the array in the 'only' param
- * You can also use 'except' rather than 'only' if you want to exclude certain routes
- * ------------------------------------*/
 Router.onBeforeAction(function() {
 
 	// If not logged in, handle the shopify OAuth login process before anything else
@@ -66,21 +62,19 @@ Router.onBeforeAction(function() {
 
 This package gives you a API method for use with all of the Shopify API endpoints.
 
-Just call `Meteor.call('shopify/api/call', 'GET', endpoint);`
+Just call `Meteor.call('shopify/api/call', <method>, endpoint);`
 
-You can replace 'GET' with any of the Meteor HTTP Methods such as:
-'GET', 'POST', 'PUT', 'DEL'
+Replace `<method>` with any of following HTTP Methods:
+
+- _GET_
+- _POST_
+- _PUT_
+- _DEL_
 
 Example custom endpoint method that you would add into your app:
 
 ```
 Meteor.methods({
-	
-	/* ------------------------------------------------
-	 * Example Shopify API Endpoint Method
-	 * ------------------------------------------------
-	 * Create your custom endpoint methods like this..
-	 * ----------------------------------------------*/
 	'shopify/api/product/get': function(variantId) {
 
 		// Specifiy your the Shopify API endpoint
@@ -94,6 +88,7 @@ Meteor.methods({
 });
 ```
 
-*** Package is still in development ***
-Any questions / improvments, please create an issue.
+**Package is still in development**
+
+Any questions / improvments, please create an [issue](https://github.com/Koleok/ss-activewear-api/issues).
 
