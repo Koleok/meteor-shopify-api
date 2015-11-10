@@ -12,14 +12,15 @@ ShopifyApi = {
  * --------------------------------------
  * This function sets up the shopify api options for the server
  * ------------------------------------*/
-ShopifyApi.init = function (options) {
+ShopifyApi.init = options => {
     check(options, Object);
 
     // Set passed options
     ShopifyApi.options = options;
 };
 
-Meteor.startup(function () {
+Meteor.startup(() => {
+    _ = lodash;
 
     // Ensure that all the required package options are set, if not then throw an error
     if (!ShopifyApi.options.hasOwnProperty('apiKey') || ShopifyApi.options.apiKey === '') {
@@ -218,7 +219,7 @@ Meteor.methods({
                 data: {
                     webhook: {
                         "topic": `${topic}/${event}`,
-                        "address": `${Meteor.settings.shopify.url}/${topic}/${store_id}`,
+                        "address": `${Meteor.settings.shopify.url}/api/${topic}/${store_id}`,
                         "format": "json"
                     }
                 }
@@ -241,7 +242,6 @@ Meteor.methods({
     'shopify/getWebhooks': function ({
         store_id
     } = {}) {
-        this.unblock();
         ShopifyApi.init(
             Meteor.call('getStoreConfig', store_id)
         );
@@ -275,7 +275,7 @@ Meteor.methods({
         store_id
     } = {}) {
         let getHooks = new Promise((resolve, reject) => {
-            Meteor.call('getWebhooks', {
+            Meteor.call('shopify/getWebhooks', {
                 store_id
             }, (error, success) => {
                 if (success) {
@@ -294,10 +294,40 @@ Meteor.methods({
             throw err;
         });
     },
+
+    'shopify/getOpenOrders': function ({
+        store_id
+    } = {}) {
+        ShopifyApi.init(
+            Meteor.call('getStoreConfig', store_id)
+        );
+
+        let opts = {
+            method: 'GET',
+            endpoint: `/admin/orders.json`
+        };
+
+        return Meteor.call("shopify/api/call", opts);
+    },
+
+    'shopify/getAllOrders': function ({
+        store_id
+    } = {}) {
+        ShopifyApi.init(
+            Meteor.call('getStoreConfig', store_id)
+        );
+
+        let opts = {
+            method: 'GET',
+            endpoint: `/admin/orders.json?status=any`
+        };
+
+        return Meteor.call("shopify/api/call", opts);
+    },
 });
 
 // Register login handler for shopify embedded app login
-Accounts.registerLoginHandler(function (loginRequest) {
+Accounts.registerLoginHandler(loginRequest => {
 
     if (!loginRequest.shopify)
         return undefined; // if the login request is not for shopify, don't handle
@@ -307,11 +337,11 @@ Accounts.registerLoginHandler(function (loginRequest) {
     };
 });
 
-let serializeObject = function (object) {
+let serializeObject = object => {
     let string = [];
     for (let param in object)
         if (object.hasOwnProperty(param)) {
-            string.push(encodeURIComponent(param) + "=" + encodeURIComponent(object[param]));
+            string.push(`${encodeURIComponent(param)}=${encodeURIComponent(object[param])}`);
         }
     return string.join("&");
 };

@@ -14,7 +14,8 @@ Package.onUse(function (api) {
         'iron:router@1.0.7',
         'accounts-base',
         'service-configuration',
-        'ecmascript'
+        'ecmascript',
+        'erasaur:meteor-lodash'
     ], ['client', 'server']);
 
     // Client only

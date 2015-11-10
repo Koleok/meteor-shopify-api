@@ -1,3 +1,7 @@
+Meteor.startup(() => {
+    _ = lodash;
+});
+
 ShopifyApi = {
     options: {}
 };
