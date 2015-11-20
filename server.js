@@ -48,7 +48,7 @@ Meteor.methods({
      * Construct auth url with passed parameters
      * ------------------------------------*/
     'shopify/getInstallURL': shop => {
-        return `https://${shopName}.myshopify.com/admin/oauth/authorize?
+        return `https://${shop}.myshopify.com/admin/oauth/authorize?
             client_id=${ShopifyApi.options.apiKey}
             &scope=${ShopifyApi.options.scopes}
             &redirect_uri=${ShopifyApi.options.appUrl}/shopify/authenticate
