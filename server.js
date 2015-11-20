@@ -295,8 +295,8 @@ Meteor.methods({
         });
     },
 
-    'shopify/getOpenOrders': function ({
-        store_id
+    'shopify/getOrders': function ({
+        store_id, status = null
     } = {}) {
         ShopifyApi.init(
             Meteor.call('getStoreConfig', store_id)
@@ -304,7 +304,7 @@ Meteor.methods({
 
         let opts = {
             method: 'GET',
-            endpoint: `/admin/orders.json`
+            endpoint: status ? `/admin/orders.json?status=${status}` : `/admin/orders.json`
         };
 
         return Meteor.call("shopify/api/call", opts);
@@ -320,6 +320,21 @@ Meteor.methods({
         let opts = {
             method: 'GET',
             endpoint: `/admin/orders.json?status=any`
+        };
+
+        return Meteor.call("shopify/api/call", opts);
+    },
+
+    'shopify/getOrder': ({
+        store_id, order_id
+    } = {}) => {
+        ShopifyApi.init(
+            Meteor.call('getStoreConfig', store_id)
+        );
+
+        let opts = {
+            method: 'GET',
+            endpoint: `/admin/orders/${order_id}.json`
         };
 
         return Meteor.call("shopify/api/call", opts);
